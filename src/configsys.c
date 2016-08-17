@@ -165,10 +165,12 @@ static cfg_opt_t config_opts[] = {
     CFG_BOOL("inherit_working_dir", TRUE, CFGF_NONE),
     CFG_BOOL("command_login_shell", FALSE, CFGF_NONE),
     CFG_BOOL("start_fullscreen", FALSE, CFGF_NONE),
+
     /* Whether closing a tab shows a confirmation dialog. */
     CFG_BOOL("confirm_close_tab", FALSE, CFGF_NONE),
 
     CFG_INT("back_alpha", 0xffff, CFGF_NONE),
+    CFG_BOOL("show_on_mouse_monitor", FALSE, CFGF_NONE),
 
     /* Whether to show the full tab title as a tooltip */
     CFG_BOOL("show_title_tooltip", FALSE, CFGF_NONE),
