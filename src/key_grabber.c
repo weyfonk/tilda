@@ -22,6 +22,7 @@
 #include "key_grabber.h"
 #include "tilda.h"
 #include "xerror.h"
+#include "wizard.h"
 #include <glib.h>
 #include <glib/gi18n.h>
 #include "configsys.h"
@@ -39,6 +40,7 @@
 #include <string.h>
 
 #include <gdk/gdkx.h>
+#include <gdk/gdk.h>
 
 #define ANIMATION_UP 0
 #define ANIMATION_DOWN 1
@@ -148,14 +150,49 @@ void tilda_window_set_active (tilda_window *tw)
     DEBUG_FUNCTION ("tilda_window_set_active");
     DEBUG_ASSERT (tw != NULL);
 
+    gint mouse_x, mouse_y;
+    GdkDisplay *disp = gdk_display_get_default ();
+    GdkDeviceManager *device_manager = gdk_display_get_device_manager (disp);
+    GdkDevice *device = gdk_device_manager_get_client_pointer (device_manager);
+
+    /* Get the number of the monitor the mouse cursor is currently on */
     GdkScreen *screen = gtk_widget_get_screen (tw->window);
+    gdk_device_get_position (device, &screen, &mouse_x, &mouse_y);
+    gint mouse_monitor = gdk_screen_get_monitor_at_point (screen, mouse_x, mouse_y);
+
+    /* Get the monitor number on which the window is currently shown
+     * Idea: get the configured window position relatively to the configured
+     * monitor on which Tilda usually appears, and apply the same position
+     * on the monitor the mouse cursor is currently on */
+    int config_monitor = find_monitor_number (tw);
+    if (config_monitor != mouse_monitor) {
+        gint window_x, window_y;
+        GdkRectangle* config_monitor_rect = malloc (sizeof (GdkRectangle));
+        GdkRectangle* mouse_monitor_rect = malloc (sizeof (GdkRectangle));;
+        gdk_screen_get_monitor_workarea (screen, config_monitor, config_monitor_rect);
+        gdk_screen_get_monitor_workarea (screen, mouse_monitor, mouse_monitor_rect);
+
+        gint x_offset,y_offset;
+        x_offset = config_getint ("x_pos") - config_monitor_rect->x;
+        y_offset = config_getint ("y_pos") - config_monitor_rect->y;
+        window_x = mouse_monitor_rect->x + x_offset;
+        window_y = mouse_monitor_rect->y + y_offset;
+
+        free (config_monitor_rect);
+        free (mouse_monitor_rect);
+        gtk_window_move (GTK_WINDOW(tw->window), window_x, window_y);
+    }
+    else
+    {
+        gtk_window_move (GTK_WINDOW(tw->window), config_getint ("x_pos"), config_getint ("y_pos"));
+    }
+
     Display *x11_display = GDK_WINDOW_XDISPLAY (gdk_screen_get_root_window (screen));
     Window x11_window = GDK_WINDOW_XID (gtk_widget_get_window (tw->window) );
     Window x11_root_window = GDK_WINDOW_XID ( gdk_screen_get_root_window (screen) );
 
     XEvent event;
     long mask = SubstructureRedirectMask | SubstructureNotifyMask;
-    gtk_window_move (GTK_WINDOW(tw->window), config_getint ("x_pos"), config_getint ("y_pos"));
     if (gdk_x11_screen_supports_net_wm_hint (screen,
                                              gdk_atom_intern_static_string ("_NET_ACTIVE_WINDOW")))
     {
