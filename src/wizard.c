@@ -245,7 +245,7 @@ static void update_palette_color_button(gint idx);
 static int find_centering_coordinate (tilda_window *tw, enum dimensions dimension);
 static void initialize_geometry_spinners(tilda_window *tw);
 
-static gint find_monitor_number(tilda_window *tw)
+gint find_monitor_number(tilda_window *tw)
 {
     DEBUG_FUNCTION ("find_monitor_number");
 
